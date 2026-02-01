@@ -1,0 +1,381 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LoanPro – Full Settings</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root{
+  --main:#0047b3;
+  --bg:#e6f7ff;
+  --text:18px;
+  --font:#000;
+  --highlight:#fffa90;
+  --fontFamily: Arial, sans-serif;
+  --tableBg:#000;
+  --tableHeader:#222;
+  --tableFont:#fff;
+  --grandColor:#ff0;
+  --checkOn:#28a745;
+  --checkOff:#dc3545;
+  --checkDim:#ffc107;
+  --blueGradStart:#0a58ff;
+  --blueGradEnd:#0047b3;
+  --blueGrad: linear-gradient(135deg, var(--blueGradStart), var(--blueGradEnd));
+  --blueGradHover: linear-gradient(135deg, var(--blueGradStart), var(--blueGradEnd));
+}
+body{background:var(--bg); font-family:var(--fontFamily); margin:0; padding:10px; font-size:var(--text); color:var(--font);}
+body.dark{background:#111;color:#eee;}
+body.dark .box{background:#1e1e1e;}
+.box{max-width:520px;margin:auto;background:#fff;padding:15px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.2);margin-bottom:12px;}
+h2{text-align:center;color:var(--main);}
+input,button,select,label{width:100%;padding:10px;margin-top:6px;font-size:var(--text);border-radius:8px;border:1px solid #444;box-sizing:border-box;font-family:var(--fontFamily);}
+input:focus{border-color:var(--main);background:var(--highlight);}
+button{background:var(--blueGrad); color:#fff; border:none; cursor:pointer; margin-top:6px; font-weight:600; transition:.3s;}
+button:hover{background:var(--blueGradHover);}
+table{width:100%; border-collapse:collapse; margin-top:10px; background:var(--tableBg); color:var(--tableFont); font-family:var(--fontFamily);}
+th, td{border:1px solid #777; padding:6px; text-align:center;}
+th{background:var(--tableHeader); color:var(--tableFont);}
+#summary b{ color: var(--grandColor); }
+.hidden{display:none;}
+.checkbox-label{display:flex;align-items:center;cursor:pointer;}
+.checkbox-label input[type=checkbox]{margin-right:8px; width:20px; height:20px; accent-color:var(--checkDim);}
+.checkbox-label input[type=checkbox]:checked{accent-color:var(--checkOn);}
+.checkbox-label input[type=checkbox]:indeterminate{accent-color:var(--checkDim);}
+#result{margin-top:10px;padding:5px;border-radius:8px;}
+</style>
+</head>
+<body>
+
+<div class="box">
+<h2>LoanPro</h2>
+<input id="billInput" placeholder="Bill No (R1234 / Y1234)">
+<input id="amtInput" type="number" placeholder="Loan Amount">
+<input id="dtInput" type="text" inputmode="numeric" placeholder="DD/MM/YYYY">
+<input id="paidInput" type="number" placeholder="Paid Months">
+<button id="calcBtn">CALCULATE</button>
+<div id="result"></div>
+<button onclick="addLoan()">➕ ADD LOAN</button>
+</div>
+
+<div class="box">
+<h3>Loan Table</h3>
+<table>
+<tr>
+<th>Loan</th>
+<th>Due Months</th>
+<th>Interest</th>
+<th>Total</th>
+<th>✖</th>
+</tr>
+<tbody id="rows"></tbody>
+</table>
+<div id="summary"></div>
+<button onclick="openPay()">PAY (GPAY)</button>
+<button onclick="sendWhatsApp()">WHATSAPP</button>
+<button onclick="printInvoice()">PRINT INVOICE</button>
+</div>
+
+<div class="box">
+<button onclick="admin()">⚙ ADMIN SETTINGS</button>
+<div id="settings" class="hidden">
+<h4>Admin Settings</h4>
+<label>Google Sheet Apps Script URL</label>
+<input id="billUrlInput" placeholder="Apps Script Web App URL">
+<label class="checkbox-label"><input type="checkbox" id="fetchOnInput"> Enable Sheet Push</label>
+<hr>
+<label>Notice/SMS Bulk URL</label>
+<input id="noticeUrlInput" placeholder="Notice/SMS URL">
+<label class="checkbox-label"><input type="checkbox" id="noticeOnInput"> Enable Bulk SMS</label>
+<button onclick="sendBulkNotice()">SEND BULK NOTICE</button>
+<hr>
+<label>Interest Mode</label>
+<select id="intModeInput">
+<option value="two">Two Rate</option>
+<option value="one">Single Rate</option>
+<option value="off">No Interest</option>
+</select>
+<label>Interest ≤6 months %</label><input id="r1Input" type="number">
+<label>Interest >6 months %</label><input id="r2Input" type="number">
+<hr>
+<label>Main Theme Color</label><input type="color" id="mainColorInput">
+<label>Highlight Color</label><input type="color" id="highlightColorInput">
+<label>Invoice Font Size (px)</label><input type="number" id="invoiceFontInput">
+<label>Invoice Font Color</label><input type="color" id="invoiceColorInput">
+<label>Invoice Background Color</label><input type="color" id="invoiceBgInput">
+<label class="checkbox-label"><input type="checkbox" id="darkOnInput"> Dark Mode</label>
+<hr>
+<label>Font Family</label>
+<select id="fontFamilyInput">
+<option value="Arial, sans-serif">Arial</option>
+<option value="'Arial Black', Gadget, sans-serif">Arial Black</option>
+<option value="'Verdana', sans-serif">Verdana</option>
+<option value="'Tahoma', sans-serif">Tahoma</option>
+<option value="'Courier New', monospace">Courier New</option>
+<option value="'Times New Roman', serif">Times New Roman</option>
+</select>
+<hr>
+<label>Extra Charge Amount (₹)</label><input id="extraValInput" type="number">
+<label class="checkbox-label"><input type="checkbox" id="extraOnInput"> Enable Extra Charge</label>
+<hr>
+<h4>Loan Table Colors</h4>
+<label>Table Background</label><input type="color" id="tableBgInput">
+<label>Table Header Color</label><input type="color" id="tableHeaderInput">
+<label>Table Font Color</label><input type="color" id="tableFontInput">
+<label>Grand Total Color</label><input type="color" id="grandColorInput">
+<hr>
+<h4>Blue Guardian Gradient</h4>
+<label>Gradient Start Color</label><input type="color" id="gradStartInput" value="#0a58ff">
+<label>Gradient End Color</label><input type="color" id="gradEndInput" value="#0047b3">
+<hr>
+<label>Change Admin Password</label><input id="newPassInput">
+<button onclick="saveSettings()">SAVE SETTINGS</button>
+</div>
+</div>
+
+<script>
+// ===== VARIABLES =====
+let loans=[], cur=null, totalLoan=0, totalInterest=0;
+let pass=localStorage.pass||"1234";
+let r1v=+localStorage.r1||1.25, r2v=+localStorage.r2||1.75, intModeVal=localStorage.intMode||"two";
+let mainClr=localStorage.mainColor||"#0047b3", highlightClr=localStorage.highlightColor||"#fffa90";
+let invoiceFont=+localStorage.invoiceFont||18, invoiceColor=localStorage.invoiceColor||"#0f0", invoiceBg=localStorage.invoiceBg||"#000";
+let darkEnabled=localStorage.dark==="true";
+let tableBg=localStorage.tableBg||"#000", tableHeader=localStorage.tableHeader||"#222", tableFont=localStorage.tableFont||"#fff", grandClr=localStorage.grandColor||"#ff0";
+let fontFamilyVal=localStorage.fontFamily||"Arial, sans-serif";
+let extraOn=localStorage.extraOn==="true", extraVal=+localStorage.extraVal||10;
+let billUrlVal=localStorage.billUrl||"", fetchEnabled=localStorage.fetchOn==="true";
+let noticeUrlVal=localStorage.noticeUrl||"", noticeEnabled=localStorage.noticeOn==="true";
+let gradStart = localStorage.gradStart||"#0a58ff", gradEnd = localStorage.gradEnd||"#0047b3";
+
+// ===== THEME =====
+function applyTheme(){
+  document.documentElement.style.setProperty("--main",mainClr);
+  document.documentElement.style.setProperty("--highlight",highlightClr);
+  document.documentElement.style.setProperty("--tableBg",tableBg);
+  document.documentElement.style.setProperty("--tableHeader",tableHeader);
+  document.documentElement.style.setProperty("--tableFont",tableFont);
+  document.documentElement.style.setProperty("--grandColor",grandClr);
+  document.documentElement.style.setProperty("--fontFamily",fontFamilyVal);
+  document.documentElement.style.setProperty("--blueGrad",`linear-gradient(135deg, ${gradStart}, ${gradEnd})`);
+  document.documentElement.style.setProperty("--blueGradHover",`linear-gradient(135deg, ${gradStart}, ${gradEnd})`);
+  darkEnabled?document.body.classList.add("dark"):document.body.classList.remove("dark");
+}
+applyTheme();
+
+// ===== ELEMENTS =====
+const billInput=document.getElementById('billInput');
+const amtInput=document.getElementById('amtInput');
+const dtInput=document.getElementById('dtInput');
+const paidInput=document.getElementById('paidInput');
+const calcBtn=document.getElementById('calcBtn');
+const rows=document.getElementById('rows');
+const summary=document.getElementById('summary');
+const focusables=[billInput,amtInput,dtInput,paidInput,calcBtn];
+
+// ===== DATE INPUT AUTO FORMAT =====
+dtInput.addEventListener("input", function(){
+  let pos=this.selectionStart;
+  let v=this.value.replace(/\D/g,'').slice(0,8);
+  if(v.length>4)v=v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4);
+  else if(v.length>2)v=v.slice(0,2)+'/'+v.slice(2);
+  this.value=v;
+  if(pos===3||pos===6)pos++;
+  this.setSelectionRange(pos,pos);
+});
+
+// ===== AUTO CALC + ENTER + JUMP =====
+focusables.forEach((el,idx)=>{
+  el.addEventListener("keydown",e=>{
+    if(e.key==="Enter"){
+      e.preventDefault();
+      let next=focusables[(idx+1)%focusables.length];
+      next.focus();
+      if(el===paidInput || el===calcBtn) calc();
+    }
+  });
+  el.addEventListener("input",calc);
+});
+
+// ===== CALCULATION =====
+function parseDate(s){let p=s.split("/");return new Date(p[2],p[1]-1,p[0]);}
+function getTotalMonths(start,today){
+  if(today<start)return 0;
+  let months=(today.getFullYear()-start.getFullYear())*12 + (today.getMonth()-start.getMonth());
+  if(today.getDate()>start.getDate()) months++;
+  return Math.max(1,months);
+}
+function calc(){
+  if(!dtInput.value||!amtInput.value) return;
+  let start=parseDate(dtInput.value), today=new Date(); today.setHours(0,0,0,0);
+  let totalMonths=getTotalMonths(start,today), paid=+paidInput.value||0; 
+  if(paid>totalMonths) paid=totalMonths;
+  let due=totalMonths-paid, amt=+amtInput.value||0, interest=0;
+  if(intModeVal==="two"){let used=Math.min(6,paid), left=Math.max(0,6-used); let m1=Math.min(left,due), m2=due-m1; interest=(amt*m1*r1v/100)+(amt*m2*r2v/100);}
+  else if(intModeVal==="one") interest=amt*due*r2v/100;
+  else interest=0;
+  if(extraOn && due>=6) interest+=extraVal;
+  let total=amt+interest;
+  cur={a:amt,m:due,i:interest,total};
+  document.getElementById("result").innerHTML=`<div style="background:${invoiceBg}; color:${invoiceColor}; font-size:${invoiceFont}px; font-family:${fontFamilyVal}; padding:5px;">Date: ${dtInput.value}<br>Total Months: ${totalMonths} | Paid: ${paid} | Due: ${due}<br>Loan: ₹${amt}<br>Interest: ₹${interest.toFixed(2)}<br><b>Total: ₹${total.toFixed(2)}</b></div>`;
+}
+
+// ===== TABLE =====
+function addLoan(){if(!cur) return; loans.push(cur); render(); saveLoans(); if(fetchEnabled && billUrlVal) sendToSheet(cur);}
+function render(){rows.innerHTML=""; totalLoan=0; totalInterest=0; loans.forEach((l,i)=>{totalLoan+=l.a; totalInterest+=l.i; rows.innerHTML+=`<tr><td>${l.a}</td><td>${l.m}</td><td>${l.i.toFixed(2)}</td><td>${l.total.toFixed(2)}</td><td><button onclick="del(${i})">✖</button></td></tr>`;}); summary.innerHTML=`Loan ₹${totalLoan}<br>Interest ₹${totalInterest}<br><b>Grand ₹${totalLoan+totalInterest}</b>`;}
+function del(i){loans.splice(i,1); render(); saveLoans();}
+function saveLoans(){localStorage.loans=JSON.stringify(loans);}
+function loadLoans(){if(localStorage.loans){loans=JSON.parse(localStorage.loans); render();}}
+loadLoans();
+
+// ===== ADMIN SETTINGS =====
+function admin(){let entered=prompt("Enter Admin Password:"); if(entered===pass) document.getElementById("settings").classList.toggle("hidden"); else alert("Incorrect password!");}
+
+
+// ===== GOOGLE SHEET PUSH =====
+function fetchBillFromSheet(){
+  if(!billUrlVal){
+    alert("Google Sheet URL nahi hai");
+    return;
+  }
+
+  var billVal = billInput.value.trim();
+  if(!billVal) return;
+
+  fetch(billUrlVal + "?bill=" + encodeURIComponent(billVal))
+    .then(function(r){ return r.text(); })
+    .then(function(t){
+      if(t === "NOT FOUND"){
+        alert("Bill number sheet me nahi mila");
+        return;
+      }
+
+      var data = JSON.parse(t);
+
+      document.getElementById("result").innerHTML =
+        "Bill No: " + data.bill + "<br>" +
+        "Amount: ₹" + data.amount + "<br>" +
+        "Date: " + data.date;
+
+      amtInput.value = data.amount;
+      dtInput.value  = data.date;
+    })
+    .catch(function(){
+      alert("Fetch error");
+    });
+}
+billInput.addEventListener("change", fetchBillFromSheet);
+
+
+// ===== BULK NOTICE =====
+function sendBulkNotice(){if(!noticeEnabled||!noticeUrlVal) return alert("Enable Bulk SMS and set URL"); fetch(noticeUrlVal).then(r=>r.text()).then(t=>alert("Bulk notice sent!"));}
+
+// ===== PAY / WHATSAPP / PRINT =====
+function openPay(){let total=loans.reduce((s,l)=>s+l.total,0); if(!total) return alert("No amount"); window.open(`upi://pay?pa=yourupi@bank&am=${total}&cu=INR`);}
+function sendWhatsApp(){let total=loans.reduce((s,l)=>s+l.total,0); if(!total) return; let msg=encodeURIComponent(`Loan Due Amount ₹${total}`); window.open(`https://wa.me/?text=${msg}`);}
+function printInvoice(){window.print();}
+
+calcBtn.onclick=calc;
+</script>
+</body>
+</html>
+<script>
+// ===== LOAD SETTINGS INTO INPUTS =====
+function loadSettingsUI(){
+  document.getElementById("r1Input").value = r1v;
+  document.getElementById("r2Input").value = r2v;
+  document.getElementById("intModeInput").value = intModeVal;
+
+  document.getElementById("billUrlInput").value = billUrlVal;
+  document.getElementById("fetchOnInput").checked = fetchEnabled;
+
+  document.getElementById("noticeUrlInput").value = noticeUrlVal;
+  document.getElementById("noticeOnInput").checked = noticeEnabled;
+
+  document.getElementById("mainColorInput").value = mainClr;
+  document.getElementById("highlightColorInput").value = highlightClr;
+  document.getElementById("invoiceFontInput").value = invoiceFont;
+  document.getElementById("invoiceColorInput").value = invoiceColor;
+  document.getElementById("invoiceBgInput").value = invoiceBg;
+  document.getElementById("darkOnInput").checked = darkEnabled;
+
+  document.getElementById("fontFamilyInput").value = fontFamilyVal;
+
+  document.getElementById("extraValInput").value = extraVal;
+  document.getElementById("extraOnInput").checked = extraOn;
+
+  document.getElementById("tableBgInput").value = tableBg;
+  document.getElementById("tableHeaderInput").value = tableHeader;
+  document.getElementById("tableFontInput").value = tableFont;
+  document.getElementById("grandColorInput").value = grandClr;
+
+  document.getElementById("gradStartInput").value = gradStart;
+  document.getElementById("gradEndInput").value = gradEnd;
+}
+loadSettingsUI();
+
+
+// ===== SAVE SETTINGS (FULL FIX) =====
+function saveSettings(){
+  r1v = +r1Input.value;
+  r2v = +r2Input.value;
+  intModeVal = intModeInput.value;
+
+  mainClr = mainColorInput.value;
+  highlightClr = highlightColorInput.value;
+  invoiceFont = +invoiceFontInput.value;
+  invoiceColor = invoiceColorInput.value;
+  invoiceBg = invoiceBgInput.value;
+  darkEnabled = darkOnInput.checked;
+
+  fontFamilyVal = fontFamilyInput.value;
+
+  extraVal = +extraValInput.value;
+  extraOn = extraOnInput.checked;
+
+  tableBg = tableBgInput.value;
+  tableHeader = tableHeaderInput.value;
+  tableFont = tableFontInput.value;
+  grandClr = grandColorInput.value;
+
+  gradStart = gradStartInput.value;
+  gradEnd = gradEndInput.value;
+
+  billUrlVal = billUrlInput.value;
+  fetchEnabled = fetchOnInput.checked;
+  noticeUrlVal = noticeUrlInput.value;
+  noticeEnabled = noticeOnInput.checked;
+
+  localStorage.setItem("r1", r1v);
+  localStorage.setItem("r2", r2v);
+  localStorage.setItem("intMode", intModeVal);
+  localStorage.setItem("mainColor", mainClr);
+  localStorage.setItem("highlightColor", highlightClr);
+  localStorage.setItem("invoiceFont", invoiceFont);
+  localStorage.setItem("invoiceColor", invoiceColor);
+  localStorage.setItem("invoiceBg", invoiceBg);
+  localStorage.setItem("dark", darkEnabled);
+  localStorage.setItem("fontFamily", fontFamilyVal);
+  localStorage.setItem("extraVal", extraVal);
+  localStorage.setItem("extraOn", extraOn);
+  localStorage.setItem("tableBg", tableBg);
+  localStorage.setItem("tableHeader", tableHeader);
+  localStorage.setItem("tableFont", tableFont);
+  localStorage.setItem("grandColor", grandClr);
+  localStorage.setItem("gradStart", gradStart);
+  localStorage.setItem("gradEnd", gradEnd);
+  localStorage.setItem("billUrl", billUrlVal);
+  localStorage.setItem("fetchOn", fetchEnabled);
+  localStorage.setItem("noticeUrl", noticeUrlVal);
+  localStorage.setItem("noticeOn", noticeEnabled);
+
+  let newPass = newPassInput.value;
+  if(newPass){
+    pass = newPass;
+    localStorage.pass = newPass;
+  }
+
+  applyTheme();
+  alert("Settings Saved Successfully ✔");
+}
+</script>
