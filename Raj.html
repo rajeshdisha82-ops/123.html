@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultimate Route Optimizer</title>
+<style>
+body{font-family:Arial,sans-serif;background:#eef2ff;padding:10px}
+h2{color:#0047b3;}
+textarea,button{width:100%;padding:10px;margin-top:10px;font-size:16px;border-radius:6px;border:1px solid #ccc}
+button{background:#0047b3;color:#fff;cursor:pointer}
+button:hover{background:#003399}
+#out{background:#fff;padding:15px;margin-top:15px;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.1)}
+a{color:#0047b3;text-decoration:none;font-weight:bold}
+</style>
+</head>
+<body>
+
+<h2>🚀 Ultimate Route Optimizer</h2>
+<p>Enter your locations (one per line, exclude start/end):</p>
+<textarea id="places" rows="12">
+Triplicane, Chennai
+Sowcarpet, Chennai
+Tambaram, Chennai
+Avadi, Chennai
+Kaveripakkam, Tamil Nadu
+Walajabad, Tamil Nadu
+Kundrathur, Chennai
+</textarea>
+
+<button onclick="calculateRoute()">Calculate Shortest Routes</button>
+
+<div id="out"></div>
+
+<script>
+const start = "Royapuram, Chennai";
+const petrolPrice = 105; // ₹ per litre
+const mileage = 15;       // km per litre
+
+function calculateRoute(){
+  const textarea = document.getElementById("places");
+  const locations = textarea.value.trim().split("\n").map(l=>l.trim());
+  
+  const allLocations = [start, ...locations];
+  
+  // Generate all permutations for TSP (only for <=10 locations)
+  function permute(arr){
+    if(arr.length === 0) return [[]];
+    let res = [];
+    for(let i=0;i<arr.length;i++){
+      let rest = permute(arr.slice(0,i).concat(arr.slice(i+1)));
+      rest.forEach(r=>res.push([arr[i],...r]));
+    }
+    return res;
+  }
+  
+  let perms = permute(locations);
+  let bestRoutes = [];
+  
+  const service = new google.maps.DistanceMatrixService();
+  
+  // Function to calculate total distance/time for one route
+  async function calcDistance(route){
+    let routeFull = [start,...route,start];
+    return new Promise(resolve=>{
+      service.getDistanceMatrix({
+        origins: routeFull,
+        destinations: routeFull,
+        travelMode: 'DRIVING'
+      }, (res,status)=>{
+        if(status!=="OK"){ alert("API error "+status); return; }
+        let totalKm = 0;
+        let totalTime = 0;
+        for(let i=0;i<routeFull.length-1;i++){
+          let elem = res.rows[i].elements[i+1];
+          totalKm += elem.distance.value/1000;
+          totalTime += elem.duration.value/3600;
+        }
+        resolve({route: routeFull, km: totalKm, time: totalTime});
+      });
+    });
+  }
+  
+  async function processAll(){
+    let results = [];
+    for(let i=0;i<perms.length;i++){
+      let data = await calcDistance(perms[i]);
+      results.push(data);
+    }
+    // Sort by km
+    results.sort((a,b)=>a.km-b.km);
+    bestRoutes = results.slice(0,3); // top 3 best
+    displayResults();
+  }
+  
+  function displayResults(){
+    let outHTML="";
+    bestRoutes.forEach((r,i)=>{
+      let petrol = r.km/mileage;
+      let cost = petrol*petrolPrice;
+      let mapLink = "https://www.google.com/maps/dir/"+r.route.map(s=>encodeURIComponent(s)).join("/");
+      outHTML+=`<h3>${i+1} Best Route</h3>
+      <b>Route:</b> ${r.route.join(" → ")}<br>
+      <b>Total Distance:</b> ${r.km.toFixed(1)} km<br>
+      <b>Estimated Time:</b> ${r.time.toFixed(1)} hours<br>
+      <b>Petrol Required:</b> ${petrol.toFixed(1)} litres<br>
+      <b>Petrol Cost:</b> ₹${cost.toFixed(0)}<br>
+      <b>Map Link:</b> <a href="${mapLink}" target="_blank">Open in Google Maps</a><br><hr>`;
+    });
+    document.getElementById("out").innerHTML = outHTML;
+  }
+  
+  processAll();
+}
+</script>
+
+<!-- Replace YOUR_API_KEY with your Google Maps API Key -->
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+
+</body>
+</html>
